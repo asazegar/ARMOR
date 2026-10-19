@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  nats-bus:
+    image: nats:latest
+    container_name: armor-nats-bus
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    command: ["-D"]
+
+  armor-agent-01:
+    build: ./agent
+    container_name: armor-agent-01
+    environment:
+      - ARMOR_NODE_ID=edge-node-01
+      - ARMOR_NATS_URL=nats://nats-bus:4222
+      - ARMOR_BATCH_SIZE=2
+      - ARMOR_FLUSH_INTERVAL=1.0
+    depends_on:
+      - nats-bus
+
+  armor-backend:
+    build: ./backend
+    container_name: armor-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - SHUFFLE_WEBHOOK=http://localhost:5000/webhook
+
+  armor-analytics:
+    build: ./analytics
+    container_name: armor-analytics-engine
+    environment:
+      - ARMOR_NATS_URL=nats://nats-bus:4222
+      - ARMOR_BACKEND_URL=http://armor-backend:8000/alerts
+    depends_on:
+      - nats-bus
+      - armor-backend

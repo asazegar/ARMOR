@@ -1,0 +1,4 @@
+nats-py==2.7.0
+networkx==3.2.1
+numpy==1.26.4
+requests==2.31.0
